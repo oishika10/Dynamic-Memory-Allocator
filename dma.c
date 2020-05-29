@@ -71,9 +71,11 @@ void init(){
     //4. Put the size of the HEADER in the footer of the block
     *(int *)(((char*)HEADER + 20)) = 24 | 0x1;
     //5. Set the predecessor and the sucessor block to 0s.
-    * (long *) ( (unsigned int*)CURR_TAIL + 1 )  = NULL;
-    * (long *) ( (unsigned int*)CURR_TAIL + 3 ) = NULL;
-    CURR_TAIL = (int*)HEADER + 3;
+    * (long *) ( (unsigned int*)HEADER + 1 )  = NULL;
+    * (long *) ( (unsigned int*)HEADER + 3 ) = NULL;
+    
+    CURR_TAIL = ( void *) ( (unsigned int*)HEADER + 3);
+    
     MALLOC_NUM,FREE_NUM, ALLOCATED = 0;
     
 }
