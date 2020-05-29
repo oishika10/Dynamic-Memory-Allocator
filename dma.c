@@ -114,7 +114,7 @@ void* findFit(int size){
 /* mallocAttemp tries to immitate the malloc function. */
 
 void* mallocAttempt(int size){
-    printf("Value of current brk: %d \n", (int*)sbrk(0));
+
     ALLOCATED += size;
     void* val;
     
@@ -128,7 +128,7 @@ void* mallocAttempt(int size){
     //3. Otherwise request for more memory from heap
     if (!val) val = sbrk(size);
     
-    printf("Value of current val: %d \n", (int*)val);
+
     
     //4. Assign header
     *(int*)val = size | 0x1;
@@ -147,20 +147,65 @@ void* mallocAttempt(int size){
 
 
 
-void freeAttempt(int* memoryAddress){
-//    //1. Check whether the predecessor block and the successor blocks are free.
-    printf("%d ", (int*)memoryAddress);
-    printf("%d \n", ((char*)memoryAddress - 4));
-    printf("%d \n", (char *)memoryAddress +  ( *(memoryAddress-4) & ~0x1 ) ;
-//    int prev =  * (memoryAddress - 4) & 0x1;
-//    int succ =  * ( int* )   ( (char *)memoryAddress + ( (*memoryAddress) & ~0x1 ) )  & 0x1;
-//    //2. Depending on whether the predecessor and successor blocks are free or not,
-//    //coalesce the block.
+void freeAttempt(char* memoryAddress){
+    //1. Check whether the predecessor block and the successor blocks are free.
+    int pred = *(memoryAddress - 8) & 0x1;
+    int succ = *(memoryAddress + *(int*)(memoryAddress - 4) - 5) & 0x1;
+   
+    
+    //2. Depending on whether the predecessor and successor blocks are free or not,
+    //coalesce the block + change the tail + set the current block to free
+
+
+    if (pred && succ){ //If both previous and next blocks are occupied.
+        //a. Set the last bit to 0 to indicate that it has been freed.
+        *(int*)(memoryAddress - 4) = *(int*)(memoryAddress - 4) & ~0x1;
+        *((char*)memoryAddress + *(int *)((char*)memoryAddress - 4) - 1 - 8) = *((char*)memoryAddress + *(int *)((char*)memoryAddress - 4) - 1 - 8) & ~0x1;
+        
+        //b. Change the current tail to point to memory address of the block being freed.
+        *(long*)CURR_TAIL = memoryAddress-4;
+        CURR_TAIL = memoryAddress + 12;
+        *(long*)CURR_TAIL = NULL;
+    }
+    
+    else if (!pred && succ) { //If the prev block is freed, but next block is allocated
+        
+        //a. Just change the header in the previous block and footer in the current block and you're good
+        
+        int sizePrev = *(int *)(memoryAddress - 8); //Size of the previous block
+        int sizeCurr = *(int *)(memoryAddress - 4) - 1; //Size of the current block
+        
+        * (int*) (memoryAddress - 4 - sizePrev) = sizeCurr + sizePrev; //change header in the previous block
+        * (int*) (memoryAddress - 4 + sizeCurr) = sizeCurr + sizePrev; //change footer in the current block
+    }
+    
+    else if (pred && !succ) { //If the prev block is allocated but the next block is freed
+        /*1. We need to change the header of the current block, and the footer of the next block.
+        But before we do that, we need to store the values of the predecessor and succesor block
+        from the next block. */
+        long* predBlock = *(long *)(   (memoryAddress + *(int*)(memoryAddress - 4) - 5)   +   4);
+        long* nextBlock = *(long *)(   (memoryAddress + *(int*)(memoryAddress - 4) - 5)   +   12);
+        
+        
+        int sizeNext = *(int *)(memoryAddress + *(int*)(memoryAddress - 4) - 5); //Size of the next block
+        int sizeCurr = *(int *)(memoryAddress - 4) - 1; //Size of the current block
+        
+        *(int *)(memoryAddress - 4) = sizeCurr + sizeNext; //change header of curr block
+        *(long *)(memoryAddress) = predBlock; //add in values for predecessor
+        *(long *)(memoryAddress + 8) = nextBlock; //add in values of successor
+        
+        *(int *)(memoryAddress - 4 + sizeCurr + sizeNext - 4) = sizeCurr + sizeNext; //change footer of next block
+        
+    }
+    
+//    else { //If both pred and succ blocks are allocated
+//        /*Set the pred of the whole chunk to be the succ of the previous block.
+//         Set the succ of the whole chunk to be the pred of the next block */
 //
-//    printf("%d %d\n", prev, succ);
-//    //3.Look for the tail and make it the current tail
 //
-//
+//    }
+    
+
 }
 
 
@@ -176,9 +221,9 @@ int main() {
     printf("MALLOC ATTEMPT 1 \n");
     int* new = (int *)mallocAttempt(32);
     *new = 42;
-    freeAttempt(new);
+
     
-    printf("Value stored at new is: %d and the size of the requested block is: %d, %d\n", *new, * ((char*)new - 4) - 1, *( (char*)new + *(int *)((char*)new - 4) - 1 - 8)-1) ;
+    printf("Value stored at new is: %d and the size of the requested block is: %d, %d\n", *new, * ((char*)new - 4) - 1, *( (char*)new + *(int *)((char*)new - 4) - 1 - 8)) ;
     
     printf("----------------------------------------------------------\n");
     
@@ -186,9 +231,14 @@ int main() {
     printf("MALLOC ATTEMPT 2 \n");
     int* new2 = (int *)mallocAttempt(14);
     *new2 = 55;
-    printf("Value stored at new is: %d and the size of the requested block is: %d %d\n", *new2, * ((char*)new2 - 4) - 1,  *( (char*)new2 + *(int *)((char*)new2 - 4) - 1 - 8)-1 );
-    freeAttempt(new2);
+    printf("Value stored at new is: %d and the size of the requested block is: %d %d\n", *new2, * ((char*)new2 - 4) - 1,  *( (char*)new2 + *(int *)((char*)new2 - 4) - 1 - 8));
+    int* new3 = (int *)mallocAttempt(63);
+    
     printf("----------------------------------------------------------\n");
+    freeAttempt(new);
+    freeAttempt(new2);
+    freeAttempt(new3);
+    
     
     printf("PRINTING THROUGHPUT\n");
     throughput();
