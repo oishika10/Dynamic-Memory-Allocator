@@ -183,6 +183,7 @@ void freeAttempt(char* memoryAddress){
         /*1. We need to change the header of the current block, and the footer of the next block.
         But before we do that, we need to store the values of the predecessor and succesor block
         from the next block. */
+        
         long* predBlock = *(long *)(   (memoryAddress + *(int*)(memoryAddress - 4) - 5)   +   4);
         long* nextBlock = *(long *)(   (memoryAddress + *(int*)(memoryAddress - 4) - 5)   +   12);
         
@@ -197,14 +198,6 @@ void freeAttempt(char* memoryAddress){
         *(int *)(memoryAddress - 4 + sizeCurr + sizeNext - 4) = sizeCurr + sizeNext; //change footer of next block
         
     }
-    
-//    else { //If both pred and succ blocks are allocated
-//        /*Set the pred of the whole chunk to be the succ of the previous block.
-//         Set the succ of the whole chunk to be the pred of the next block */
-//
-//
-//    }
-    
 
 }
 
