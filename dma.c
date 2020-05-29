@@ -28,7 +28,6 @@ WARNING: Some of the pointer casting and conversions may not make
  MALLOC_NUM and FREE_NUM are the number of malloc and free requests
  made by the program.
  
- 
  */
 
 
@@ -115,31 +114,53 @@ void* findFit(int size){
 /* mallocAttemp tries to immitate the malloc function. */
 
 void* mallocAttempt(int size){
-
+    printf("Value of current brk: %d \n", (int*)sbrk(0));
     ALLOCATED += size;
     void* val;
     
     //1. Adjust size to make sure it is rounded up to the nearest multiple of 24
     if (size < 24) size = 24;
     else if (size % 24) size = (24*((size/24) + 1));
+    
     //2. Look for size bytes in the free blocks
     val = findFit(size);
+    
     //3. Otherwise request for more memory from heap
     if (!val) val = sbrk(size);
+    
+    printf("Value of current val: %d \n", (int*)val);
+    
     //4. Assign header
-    *(unsigned int*)val = size | 0x1;
+    *(int*)val = size | 0x1;
+    
     //5. Assign footer
-    * (int *) (  (  (char*)val + size - 4)  ) = size | 0x1;
+    * (int *)   (  (char*)val + size - 4)   = size | 0x1;
+    
     MALLOC_NUM += 1;
+    
+    //printf("%d %d \n", (int*)val, (int*)val + 4);
+    
     //6. Return pointer to the address where the user can start manipulating the data
-    return (unsigned int*) val + 4;
+    return (char*) val + 4;
 
 }
 
-void free(long* memoryAddress){
-    
-    
-    
+
+
+void freeAttempt(int* memoryAddress){
+//    //1. Check whether the predecessor block and the successor blocks are free.
+    printf("%d ", (int*)memoryAddress);
+    printf("%d \n", ((char*)memoryAddress - 4));
+    printf("%d \n", (char *)memoryAddress +  ( *(memoryAddress-4) & ~0x1 ) ;
+//    int prev =  * (memoryAddress - 4) & 0x1;
+//    int succ =  * ( int* )   ( (char *)memoryAddress + ( (*memoryAddress) & ~0x1 ) )  & 0x1;
+//    //2. Depending on whether the predecessor and successor blocks are free or not,
+//    //coalesce the block.
+//
+//    printf("%d %d\n", prev, succ);
+//    //3.Look for the tail and make it the current tail
+//
+//
 }
 
 
@@ -151,14 +172,27 @@ int main() {
     printf("HEADER : %d CURR_TAIL: %d\n", HEADER, CURR_TAIL);
     printf("size: %d predecessor: %d successor: %d \n", *(int*)HEADER, *((long *)((unsigned int*)CURR_TAIL + 1)),*((long *)((unsigned int*)CURR_TAIL + 1) + 1));
     printf("----------------------------------------------------------\n");
+    
     printf("MALLOC ATTEMPT 1 \n");
     int* new = (int *)mallocAttempt(32);
     *new = 42;
-    printf("Value stored at new is: %d and the size of the requested block is: %d, %d\n", *new, *(new-4)-1, *(int *)(((char*)(new-4) + (*(new-4)-1) - 4)));
+    freeAttempt(new);
+    
+    printf("Value stored at new is: %d and the size of the requested block is: %d, %d\n", *new, * ((char*)new - 4) - 1, *( (char*)new + *(int *)((char*)new - 4) - 1 - 8)-1) ;
+    
+    printf("----------------------------------------------------------\n");
+    
+    
     printf("MALLOC ATTEMPT 2 \n");
     int* new2 = (int *)mallocAttempt(14);
     *new2 = 55;
-    printf("Value stored at new is: %d and the size of the requested block is: %d %d\n", *new2, *(new2-4)-1, *(int *)(((char*)(new2-4) + (*(new2-4)-1) - 4)));
+    printf("Value stored at new is: %d and the size of the requested block is: %d %d\n", *new2, * ((char*)new2 - 4) - 1,  *( (char*)new2 + *(int *)((char*)new2 - 4) - 1 - 8)-1 );
+    freeAttempt(new2);
+    printf("----------------------------------------------------------\n");
+    
     printf("PRINTING THROUGHPUT\n");
     throughput();
+
+    
 }
+    
