@@ -13,7 +13,7 @@ WARNING: Some of the pointer casting and conversions may not make
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <dma.h>
+#include "dma.h"
 
 /*
  
