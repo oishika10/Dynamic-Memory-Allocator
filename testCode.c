@@ -22,7 +22,7 @@ int main() {
     *new = 42;
 
     
-    printf("Value stored at new is: %d and the size of the requested block is: %d, %d\n", *new, * ((char*)new - 4) - 1, *( (char*)new + *(int *)((char*)new - 4) - 1 - 8)) ;
+    printf("Value stored at new is: %d and the size of the total block(requested + added padding) is: %d, %d\n", *new, * ((char*)new - 4) - 1, *( (char*)new + *(int *)((char*)new - 4) - 1 - 8)) ;
     
     printf("----------------------------------------------------------\n");
     
@@ -30,7 +30,7 @@ int main() {
     printf("MALLOC ATTEMPT 2 \n");
     int* new2 = (int *)mallocAttempt(14);
     *new2 = 55;
-    printf("Value stored at new is: %d and the size of the requested block is: %d %d\n", *new2, * ((char*)new2 - 4) - 1,  *( (char*)new2 + *(int *)((char*)new2 - 4) - 1 - 8));
+    printf("Value stored at new is: %d and the size of the total block(requested + added padding) is: %d %d\n", *new2, * ((char*)new2 - 4) - 1,  *( (char*)new2 + *(int *)((char*)new2 - 4) - 1 - 8));
     int* new3 = (int *)mallocAttempt(63);
     
     printf("----------------------------------------------------------\n");
