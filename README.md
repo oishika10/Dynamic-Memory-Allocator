@@ -1,7 +1,7 @@
 # Dynamic-Memory-Allocator
 Personal Dynamic Memory Allocator -
 
-In this project I have tried to create a dynamic memory allocator that supports the basic malloc, free, calloc functions. Additionally I have added a function that can help measure the throughput. 
+In this project I have tried to create a simple dynamic memory allocator that supports the basic malloc, free, calloc functions. Additionally I have added a function that can help measure the throughput. 
 
 A few attributes I have attempted to inculcate within this allocator are:
 
